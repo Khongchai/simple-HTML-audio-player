@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NumView</title>
+</head>
+<body style="height: 1000px">
+    <div>
+        <h1 id="audioText"data-src="testSound.mp3" style="cursor: pointer" onclick="playAudio()">Click to play sound</h1>
+    </div>
+
+    <div style="width: 100%; height: 900px; text-align: center;">
+        <div id="dragBox" style=" position: absolute; z-index: 1000; width: 100%">
+            <h3 style="user-select: none;">
+                <span id="currentTime">0:00</span> / <span id="duration">0:00</span>
+            </h3>
+        </div>
+    </div>
+    
+    
+    
+    
+    
+
+    <script>
+
+        var audioText = document.getElementById("audioText");
+        var audio;
+        var durText = document.getElementById("duration");
+        var curText = document.getElementById("currentTime");
+
+        var defPos = 0;
+        var currentPos = 0;
+        var timeShift = 0;
+        var timer;
+
+
+
+        function playAudio()
+        {
+            if (audio != null)
+            {
+                audio.pause();
+                audio.currentTime = 0;
+                audio = null;
+                durText.innerHTML = "0:00";
+                curText.innerHTML = "0:00";
+
+            }
+            else
+            {
+                audio = new Audio(audioText.dataset.src);
+                audio.volume = 0.6;
+
+                audio.addEventListener("loadedmetadata", () => {
+
+                    durText.innerHTML = timetoText(audio.duration);
+                    audio.addEventListener("timeupdate", () => {
+                        curText.innerHTML = timetoText(audio.currentTime);
+                        if (curText.innerHTML === durText.innerHTML) 
+                        {
+                            //prevents current duration from exceeding duration
+                            curText.innerHTML = durText.innerHTML;
+                        }
+                    });
+                })
+               
+                audio.play();
+
+            }
+        }
+
+        function timetoText(dur) 
+        {
+            var min = Math.floor(dur / 60);
+            var sec = Math.floor(dur % 60);
+            if (sec < 10)
+            {
+                sec = "0" + sec;
+            }
+            return min + ":" + sec;
+        }
+
+        var dragBox = document.getElementById("dragBox");
+        dragBox.addEventListener("touchstart", pauseTime);
+        dragBox.addEventListener("touchend", resumeTime);
+        
+
+        dragBox.addEventListener("mousedown", pauseTime);
+        dragBox.addEventListener("mouseup", resumeTime);
+        
+
+        function pauseTime(e)
+        {
+            if (audio != null)
+            {
+                //makes dragBox full so user can drag everywhere
+                dragBox.style.height = "100%";
+
+                dragBox.style.cursor = "ew-resize";
+               
+                defPos = e.clientX;
+
+                audio.pause();
+
+                //add
+                dragBox.addEventListener("touchmove", incrementTime);
+                dragBox.addEventListener("mousemove", incrementTime);
+
+            }
+
+            
+            
+        }
+        function resumeTime()
+        {
+            if (audio != null)
+            {
+
+                //returns width to default size
+                dragBox.style.height = "auto"
+
+                //change cursor type back
+                dragBox.style.cursor = "grab";
+
+                //change defPos back to 0
+                defPos = 0;
+
+                audio.play();
+
+                //remove mousemovelistener
+                dragBox.removeEventListener("touchmove", incrementTime);
+                dragBox.removeEventListener("mousemove", incrementTime);
+            }
+        }
+
+        function incrementTime(e)
+        {
+            currentPos = e.clientX;
+            //function for detecting mouse stop then assign new value to defPos using current clientX
+            clearTimeout(timer);
+            timer = setTimeout(relogDefaultPosition,66);
+
+            
+            if (defPos < e.clientX) 
+            { 
+                shiftAudio(-6.5);
+            }
+            else 
+            { 
+                shiftAudio(6.5);
+            }           
+
+        }
+
+        function shiftAudio(shiftVal)
+        {
+            audio.currentTime -= shiftVal;
+            timeShift = 0;
+        }
+
+        function relogDefaultPosition()
+        {
+            defPos = currentPos;
+        }
+    
+    </script>
+
+</body>
+</html>
